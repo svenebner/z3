@@ -41,6 +41,7 @@ z3_add_component(util
     params.cpp
     permutation.cpp
     prime_generator.cpp
+    profiling.cpp
     rational.cpp
     region.cpp
     rlimit.cpp
