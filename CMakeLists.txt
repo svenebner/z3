@@ -352,6 +352,16 @@ else()
 endif()
 
 ################################################################################
+# Viper profiling
+################################################################################
+option(Z3_ENABLE_VIPER_PROFILING "Enable profiling for viper toolchain use." OFF)
+if (Z3_ENABLE_VIPER_PROFILING)
+  list(APPEND Z3_COMPONENT_CXX_DEFINES "-D_VIPER_PROFILING")
+  message(STATUS "Profiling for viper toolchain")
+endif()
+
+
+################################################################################
 # Link time optimization
 ################################################################################
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_lto.cmake)

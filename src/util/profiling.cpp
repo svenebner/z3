@@ -17,20 +17,10 @@ Revision History:
 
 --*/
 #include "util/profiling.h"
-#include "util/memory_manager.h"
 #include "util/stopwatch.h"
 #include "util/trace.h"
-#include<iomanip>
 #include<iostream>
 
-/**
- * @brief Constructor for the profiling class.
- *
- * @param enable Boolean flag to enable or disable profiling.
- */
-profiling::profiling(const bool enable):
-    enabled(enable)
-{}
 
 /**
  * @brief Updates the profiling state when entering a new scope.
@@ -38,7 +28,6 @@ profiling::profiling(const bool enable):
  * @param scope The scope level to update.
  */
 void profiling::scope_update(const unsigned scope){
-    if (!enabled) return;
 
     backtracking_vector.setx(scope, stopwatch(), stopwatch());
     backtracking_vector[scope].start();
@@ -67,7 +56,6 @@ void profiling::scope_update(const unsigned scope){
  * @param new_lvl The new scope level after backtracking.
  */
 void profiling::backtracking_update(const unsigned num_scopes, const unsigned new_lvl) {
-    if (!enabled) return;
 
     TRACE("profiling_cdcl",
                   tout << "backtracking: " << num_scopes << ", new_lvl: " << new_lvl <<
@@ -84,11 +72,12 @@ void profiling::backtracking_update(const unsigned num_scopes, const unsigned ne
  * @param st Reference to the statistics object to update.
  */
 void profiling::collect_statistics(statistics & st) const {
-    if (!enabled) return;
 
     st.update("high time count", high_time_count);
     st.update("max node", currentNode);
-    high_time_backtracking_distance();
+    std::ofstream file("timing.txt");
+    high_time_backtracking_distance(&file);
+    file.close();
 }
 
 /**
@@ -97,7 +86,7 @@ void profiling::collect_statistics(statistics & st) const {
  * @param out Optional output stream to write the results. Defaults to std::cerr if null.
  */
 void profiling::high_time_backtracking_distance(std::ostream * out) const {
-    if (!enabled || backtracking_nodes.empty()) return;
+    if (backtracking_nodes.empty()) return;
 
     std::ostream & os = out ? *out : std::cerr;
 
@@ -105,7 +94,7 @@ void profiling::high_time_backtracking_distance(std::ostream * out) const {
 
     unsigned prev_backtracking_node = backtracking_nodes[0];
 
-    // Edgecase
+    // Edge case
     if (backtracking_nodes.size() == 1) {
         for (const std::tuple high_time_tuple : high_time_nodes) {
             const unsigned high_time_node = std::get<0>(high_time_tuple);
@@ -135,4 +124,17 @@ void profiling::high_time_backtracking_distance(std::ostream * out) const {
         const long min_dist = std::abs(back_dist) < std::abs(front_dist) ? back_dist : front_dist;
         os << "node: " << high_time_node << ", backtrack dist: " << min_dist << ", time: " << time << "\n";
     }
+}
+
+void profiling::setup_mam() {
+    entered_mam_loop = true;
+    mam_stopwatch.start();
+}
+
+void profiling::mam_loop_update() {
+    mam_loop_itrs++;
+}
+
+void profiling::exit_mam() {
+    mam_stopwatch.stop();
 }

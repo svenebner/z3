@@ -27,8 +27,6 @@ Revision History:
 
 class profiling {
 public:
-    // Bool to enable profiling
-    bool enabled{true};
 
 protected:
     // Vector for each layer to get total time until backtrack
@@ -48,7 +46,7 @@ protected:
     unsigned high_time_count{0};
 
 public:
-    explicit profiling(bool enable);
+    explicit profiling() = default;
 
     // Update and output info for new pushed scope
     void scope_update(unsigned scope);
@@ -58,6 +56,9 @@ public:
     void collect_statistics(statistics& st) const;
     // Calc min distance for each high time node to backtracking step
     void high_time_backtracking_distance(std::ostream* out = nullptr) const;
+    void setup_mam();
+    void mam_loop_update();
+    void exit_mam();
 
     void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
     void add_high_time_node(const unsigned node, const double time) { high_time_nodes.push_back(std::tuple{node, time}); }
