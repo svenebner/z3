@@ -34,42 +34,58 @@ protected:
     // All backtracking node numbers
     unsigned_vector backtracking_nodes;
     // All high time node numbers
-    vector<std::tuple<unsigned, double>> high_time_nodes;
+    vector<std::tuple<unsigned, double>> high_time_nodes_total;
+    // High time nodes in the mam loop
+    vector<std::tuple<unsigned, double>> mam_high_time_nodes;
+    //Threshold what counts as high runtime
+    const double high_time_threshold = 0.005;
     // Node in smtScope CDCL tree
     unsigned currentNode{0};
     // Nr. of loops iterations in mam.cpp state machine
-    unsigned mam_loop_itrs{0};
+    long unsigned mam_total_loop_itrs{0};
     bool entered_mam_loop{false};
     // Timing of last mam.cpp state machine duration
     stopwatch mam_stopwatch;
+    // Timing of last node
+    stopwatch node_total_stopwatch;
     // Nr. of states that took longer so dominate runtime
-    unsigned high_time_count{0};
+    unsigned mam_high_time_count{0};
 
+    unsigned high_time_count_total{0};
+
+    svector<std::pair<long, unsigned>> backtrack_distances;
+
+
+
+
+    std::ofstream* file_stream = nullptr;
+
+    std::vector<long unsigned> mam_case_counters = std::vector<long unsigned>(38);
+    //std::vector<stopwatch> mam_case_stopwatches = std::vector<stopwatch>(38);;
+
+    void mam_loop_output(std::ofstream* out) const;
+    double sum_mam_high_time_nodes() const;
+    // Calc min distance for each high time node to backtracking step
+    void high_time_backtracking_distance(std::ostream* out = nullptr) const;
+
+    void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
+    void add_mam_high_time_node(const unsigned node, const double time) { mam_high_time_nodes.push_back(std::tuple{node, time}); }
+    void add_high_time_node_total(const unsigned node, const double time) {high_time_nodes_total.push_back(std::tuple{node, time}); }
 public:
-    explicit profiling() = default;
-
+    profiling();
+    ~profiling();
     // Update and output info for new pushed scope
     void scope_update(unsigned scope);
     // Trace the backtracking steps
     void backtracking_update(unsigned num_scopes, unsigned new_lvl);
 
     void collect_statistics(statistics& st) const;
-    // Calc min distance for each high time node to backtracking step
-    void high_time_backtracking_distance(std::ostream* out = nullptr) const;
+
+    /*
+     * Methods used to profile src/smt/mam.cpp
+     */
     void setup_mam();
     void mam_loop_update();
     void exit_mam();
-
-    void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
-    void add_high_time_node(const unsigned node, const double time) { high_time_nodes.push_back(std::tuple{node, time}); }
-
-    // -----------------------------------
-    //
-    // Accessors
-    //
-    // -----------------------------------
-
-    unsigned& get_mam_loop_itrs() { return mam_loop_itrs; }
-    bool& get_entered_mam_loop() { return entered_mam_loop; }
-    stopwatch& get_mam_stopwatch() { return mam_stopwatch; }
+    void set_mam_loop_counters(const int enumCase) {mam_case_counters[enumCase]++;}
 };
