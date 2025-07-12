@@ -47,18 +47,21 @@ class nanostopwatch {
 
 public:
     void reset() { m_elapsed = duration_t::zero(); }
+
     void start() {
         if (!m_running) {
             m_start = now();
             m_running = true;
         }
     }
+
     void stop() {
         if (m_running) {
             m_elapsed += std::chrono::duration_cast<duration_t>(now() - m_start);
             m_running = false;
         }
     }
+
     double get_nanoseconds() const {
         if (m_running) {
             const_cast<nanostopwatch*>(this)->stop();
@@ -66,20 +69,26 @@ public:
         }
         return m_elapsed.count();
     }
+
     double get_seconds() const { return get_nanoseconds() / 1e9; }
 };
 
 struct scoped_nanowatch {
-    nanostopwatch &m_sw;
-    scoped_nanowatch(nanostopwatch &sw, bool reset = false) : m_sw(sw) {
+    nanostopwatch& m_sw;
+
+    scoped_nanowatch(nanostopwatch& sw, bool reset = false) : m_sw(sw) {
         if (reset) m_sw.reset();
         m_sw.start();
     }
+
     ~scoped_nanowatch() {
         m_sw.stop();
     }
 };
 
+/**
+ * @brief Collects data used to help Viper related issues
+ */
 class profiling {
 public:
 
@@ -119,6 +128,8 @@ protected:
         return file_output_dir + "/" + filename;
     }
 
+    void write_data_to_files() const;
+
     /*
      * Helper Functions
      */
@@ -128,7 +139,8 @@ protected:
     void output_timing_csv(const std::string& filename) const;
 
     void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
-    void add_node_runtime(const node_runtime& nRT) {node_runtime_vec.push_back(nRT); }
+    void add_node_runtime(const node_runtime& nRT) { node_runtime_vec.push_back(nRT); }
+
 public:
     explicit profiling();
     ~profiling();
@@ -149,5 +161,5 @@ public:
     void setup_mam();
     void mam_loop_update();
     void exit_mam();
-    void set_mam_loop_counters(const int enumCase) {mam_case_counters[enumCase]++;}
+    void set_mam_loop_counters(const int enumCase) { mam_case_counters[enumCase]++; }
 };

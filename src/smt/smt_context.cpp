@@ -1640,6 +1640,9 @@ namespace smt {
     }
 
     bool context::propagate_theories() {
+#ifdef _VIPER_PROFILING
+        scoped_nanowatch nw(m_profiling.theories_stopwatch);
+#endif
         for (theory * t : m_theory_set) {
             t->propagate();
             if (inconsistent())
@@ -1937,6 +1940,9 @@ namespace smt {
         if (m.has_trace_stream() && !m_is_auxiliary)
             m.trace_stream() << "[push] " << m_scope_lvl << "\n";
 
+#ifdef _VIPER_PROFILING
+        m_profiling.scope_update();
+#endif
         m_scope_lvl++;
         m_region.push_scope();
         m_scopes.push_back(scope());
@@ -2423,6 +2429,10 @@ namespace smt {
             SASSERT(m_scopes.size() == m_scope_lvl);
 
             unsigned new_lvl = m_scope_lvl - num_scopes;
+#ifdef _VIPER_PROFILING
+            m_profiling.backtracking_update(num_scopes, new_lvl);
+#endif
+
 
             cache_generation(new_lvl);
             m_qmanager->pop(num_scopes);

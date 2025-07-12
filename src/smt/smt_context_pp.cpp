@@ -428,6 +428,9 @@ namespace smt {
         for (theory* th : m_theory_set) {
             th->collect_statistics(st);
         }
+#ifdef _VIPER_PROFILING
+        m_profiling.collect_statistics(st);
+#endif
     }
 
     void context::display_statistics(std::ostream & out) const {

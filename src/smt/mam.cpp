@@ -2286,6 +2286,9 @@ namespace {
         t->get_watch().start();
         t->inc_counter();
 #endif
+#ifdef _VIPER_PROFILING
+        m_context.m_profiling.setup_mam();
+#endif
         // It doesn't make sense to process an irrelevant enode.
         TRACE("mam_execute_core", tout << "EXEC " << t->get_root_lbl()->get_name() << "\n";);
         SASSERT(m_context.is_relevant(n));
@@ -2310,7 +2313,12 @@ namespace {
         if (!m_pc)
             goto backtrack;
         TRACE("mam_int", display_pc_info(tout););
-        
+
+#ifdef _VIPER_PROFILING
+        // Updating in each step takes a considerable amount of time, might not be needed
+        m_context.m_profiling.mam_loop_update();
+        m_context.m_profiling.set_mam_loop_counters(m_pc->m_opcode);
+#endif
 #ifdef _PROFILE_MAM
         const_cast<instruction*>(m_pc)->m_counter++;
 #endif
@@ -2694,6 +2702,9 @@ namespace {
 #ifdef _PROFILE_MAM
             t->get_watch().stop();
 #endif
+#ifdef _VIPER_PROFILING
+            m_context.m_profiling.exit_mam();
+#endif
             return true; // no more alternatives
         }
         backtrack_point & bp = m_backtrack_stack[m_top - 1];
@@ -2721,6 +2732,9 @@ namespace {
                 }
 #ifdef _PROFILE_MAM
                t->get_watch().stop();
+#endif
+#ifdef _VIPER_PROFILING
+                m_context.m_profiling.exit_mam();
 #endif
                 return false;
             }

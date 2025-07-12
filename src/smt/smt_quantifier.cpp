@@ -362,8 +362,18 @@ namespace smt {
         }
 
         void propagate() {
+#ifdef _VIPER_PROFILING
+            m_context.m_profiling.quant_propagation_stopwatch.start();
+#endif
             m_plugin->propagate();
+#ifdef _VIPER_PROFILING
+            m_context.m_profiling.quant_propagation_stopwatch.stop();
+            m_context.m_profiling.instantiation_stopwatch.start();
+#endif
             m_qi_queue.instantiate();
+#ifdef _VIPER_PROFILING
+            m_context.m_profiling.instantiation_stopwatch.stop();
+#endif
         }
 
         bool check_quantifier(quantifier* q) {

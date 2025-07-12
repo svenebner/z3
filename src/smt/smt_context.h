@@ -44,6 +44,7 @@ Revision History:
 #include "util/ref.h"
 #include "util/timer.h"
 #include "util/statistics.h"
+#include "util/profiling.h"
 #include "smt/fingerprints.h"
 #include "smt/proto_model/proto_model.h"
 #include "smt/theory_user_propagator.h"
@@ -264,6 +265,15 @@ namespace smt {
         vector<std::pair<expr_ref, expr_ref>> m_values;
         void initialize_value(expr* var, expr* value);
 
+#ifdef _VIPER_PROFILING
+        // ----------------------------------
+        //
+        // Profiling initialization
+        //
+        // ----------------------------------
+    public:
+        profiling m_profiling;
+#endif
 
         // -----------------------------------
         //
