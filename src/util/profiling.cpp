@@ -134,11 +134,11 @@ void profiling::mam_loop_output(std::ofstream* out) const {
 void profiling::write_data_to_files() const {
     (*fs_general) << "timings:\n"
         << "quantifier propagation: " << quant_propagation_stopwatch.get_seconds() << "\n"
+        << "    cumulative mam high time: " << sum_mam_high_time_nodes() << "\n"
         << "quantifier queue instantiation: " << instantiation_stopwatch.get_seconds() << "\n"
-        << "theories propagation: " << theories_stopwatch.get_seconds() << "\n"
-        << "cumulative mam high time: " << sum_mam_high_time_nodes() << "\n\n";
+        << "theories propagation: " << theories_stopwatch.get_seconds() << "\n\n";
     mam_loop_output(fs_general);
-    high_time_backtracking_distance("backtracking.csv", "backtracking_distance.csv");
+    high_time_backtracking_distance("backtracking.csv");
     output_timing_csv("timing.csv");
 }
 
@@ -171,12 +171,10 @@ double profiling::sum_mam_high_time_nodes() const {
 }
 
 /**
- * @brief Calculates and outputs the distance between high-time nodes and backtracking nodes.
+ * @brief Writes all backtracking nodes to file and adds info to the general file.
  */
-void profiling::high_time_backtracking_distance(const std::string& filename,
-                                                const std::string& filename_distances) const {
+void profiling::high_time_backtracking_distance(const std::string& filename) const {
     std::ofstream os_back(concat_filepath(filename));
-    std::ofstream os_back_dist(concat_filepath(filename_distances));
 
     os_back << "backtracking_node\n";
 
@@ -185,52 +183,11 @@ void profiling::high_time_backtracking_distance(const std::string& filename,
     for (const unsigned node : backtracking_nodes) {
         os_back << node << "\n";
     }
-    // Used to count which distance is the most prevalent
-    auto min_dist_counts = std::unordered_map<long, unsigned>();
 
     // Output general info into separate file
     (*fs_general) << "backtracking_nodes: " << backtracking_nodes.size() << ", mam_high_time_nodes: " <<
         mam_high_time_count
         << ", high_time_nodes_total: " << high_time_count_total << ", threshold: " << high_time_threshold << "\n";
-
-    unsigned prev_backtracking_node = backtracking_nodes[0];
-
-    os_back_dist << "node,backtrack_dist,total_time,entered_mam_loop,mam_time\n";
-    // Edge case
-    if (backtracking_nodes.size() == 1) {
-        for (const auto& [total_time, mam_time, node, entered_mam_loop] : node_runtime_vec) {
-            if (total_time > high_time_threshold) {
-                os_back_dist << node << "," << (node - prev_backtracking_node) << "," << total_time << "," <<
-                    entered_mam_loop << "," << mam_time << "\n";
-                min_dist_counts[node - prev_backtracking_node]++;
-            }
-        }
-    }
-
-    // Next backtracking node to fetch
-    unsigned back_index = 2;
-    unsigned curr_backtracking_node = backtracking_nodes[1];
-    const unsigned backtrack_vec_size = backtracking_nodes.size();
-
-    for (const auto& [total_time, mam_time, node, entered_mam_loop] : node_runtime_vec) {
-        // Only log high time nodes
-        if (total_time > high_time_threshold) {
-            while (curr_backtracking_node < node && back_index < backtrack_vec_size) {
-                prev_backtracking_node = curr_backtracking_node;
-                curr_backtracking_node = backtracking_nodes[back_index];
-                back_index++;
-            }
-
-            const long back_dist = static_cast<long>(node) - prev_backtracking_node;
-            const long front_dist = static_cast<long>(node) - curr_backtracking_node;
-
-            const long min_dist = std::abs(back_dist) < std::abs(front_dist) ? back_dist : front_dist;
-            os_back_dist << node << "," << min_dist << "," << total_time << "," << entered_mam_loop << "," << mam_time
-                << "\n";
-
-            min_dist_counts[min_dist]++;
-        }
-    }
 }
 
 void profiling::output_timing_csv(const std::string& filename) const {

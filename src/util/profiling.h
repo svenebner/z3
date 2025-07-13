@@ -135,7 +135,7 @@ protected:
      */
     void mam_loop_output(std::ofstream* out) const;
     double sum_mam_high_time_nodes() const;
-    void high_time_backtracking_distance(const std::string& filename, const std::string& filename_distances) const;
+    void high_time_backtracking_distance(const std::string& filename) const;
     void output_timing_csv(const std::string& filename) const;
 
     void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
