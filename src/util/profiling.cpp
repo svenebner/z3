@@ -16,6 +16,7 @@ Author:
 Revision History:
 
 --*/
+#include <filesystem>
 #include "util/profiling.h"
 #include "util/trace.h"
 #include<iostream>
