@@ -26,6 +26,9 @@ Revision History:
 struct node_runtime {
     double time;
     double mam_time;
+    double quant_propagation_time;
+    double qi_queue_time;
+    double theory_time;
     unsigned node;
     bool entered_mam_loop;
 };
@@ -41,12 +44,16 @@ class nanostopwatch {
 
     time_point_t m_start;
     duration_t m_elapsed{0};
+    duration_t m_last_update{0};
     bool m_running = false;
 
     static time_point_t now() { return clock_t::now(); }
 
 public:
-    void reset() { m_elapsed = duration_t::zero(); }
+    void reset() {
+        m_elapsed = duration_t::zero();
+        m_last_update = duration_t::zero();
+    }
 
     void start() {
         if (!m_running) {
@@ -57,7 +64,9 @@ public:
 
     void stop() {
         if (m_running) {
-            m_elapsed += std::chrono::duration_cast<duration_t>(now() - m_start);
+            auto change = std::chrono::duration_cast<duration_t>(now() - m_start);
+            m_elapsed += change;
+            m_last_update += change;
             m_running = false;
         }
     }
@@ -71,6 +80,23 @@ public:
     }
 
     double get_seconds() const { return get_nanoseconds() / 1e9; }
+
+    /*
+     * Functionality to use same stop watch for total time and last node time
+     */
+    double get_last_update_nanoseconds() const {
+        if (m_running) {
+            const_cast<nanostopwatch*>(this)->stop();
+            const_cast<nanostopwatch*>(this)->start();
+        }
+        return m_last_update.count();
+    }
+
+    double get_last_update_seconds() const { return get_last_update_nanoseconds() / 1e9; }
+
+    void reset_last_update() {
+        m_last_update = duration_t::zero();
+    }
 };
 
 struct scoped_nanowatch {
@@ -104,8 +130,6 @@ protected:
     // Nr. of loops iterations in mam.cpp state machine
     long unsigned mam_total_loop_itrs{0};
     bool entered_mam_loop{false};
-    // Timing of last mam.cpp state machine duration
-    nanostopwatch mam_stopwatch;
     // Timing of last node
     nanostopwatch node_total_stopwatch;
 
@@ -151,15 +175,17 @@ public:
 
     void collect_statistics(statistics& st) const;
 
-    // Stopwatches to track % of time spent in initialisation, core propagation and theories
+    // Stopwatches to track time spent in initialisation, core propagation and theories
+    nanostopwatch total_propagation_stopwatch;
     nanostopwatch quant_propagation_stopwatch;
-    nanostopwatch instantiation_stopwatch;
+    nanostopwatch qi_queue_instantiation_stopwatch;
     nanostopwatch theories_stopwatch;
+    nanostopwatch mam_total_stopwatch;
+
     /*
      * Methods used to profile src/smt/mam.cpp
      */
-    void setup_mam();
-    void mam_loop_update();
-    void exit_mam();
+    void setup_mam() { entered_mam_loop = true; }
+    void mam_loop_update() { mam_total_loop_itrs++; };
     void set_mam_loop_counters(const int enumCase) { mam_case_counters[enumCase]++; }
 };

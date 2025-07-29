@@ -2288,6 +2288,7 @@ namespace {
 #endif
 #ifdef _VIPER_PROFILING
         m_context.m_profiling.setup_mam();
+        scoped_nanowatch nw(m_context.m_profiling.mam_total_stopwatch);
 #endif
         // It doesn't make sense to process an irrelevant enode.
         TRACE("mam_execute_core", tout << "EXEC " << t->get_root_lbl()->get_name() << "\n";);
@@ -2702,9 +2703,6 @@ namespace {
 #ifdef _PROFILE_MAM
             t->get_watch().stop();
 #endif
-#ifdef _VIPER_PROFILING
-            m_context.m_profiling.exit_mam();
-#endif
             return true; // no more alternatives
         }
         backtrack_point & bp = m_backtrack_stack[m_top - 1];
@@ -2732,9 +2730,6 @@ namespace {
                 }
 #ifdef _PROFILE_MAM
                t->get_watch().stop();
-#endif
-#ifdef _VIPER_PROFILING
-                m_context.m_profiling.exit_mam();
 #endif
                 return false;
             }

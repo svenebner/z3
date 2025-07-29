@@ -1657,6 +1657,9 @@ namespace smt {
     }
 
     void context::propagate_th_eqs() {
+#ifdef _VIPER_PROFILING
+        scoped_nanowatch nw(m_profiling.theories_stopwatch);
+#endif
         for (unsigned i = 0; i < m_th_eq_propagation_queue.size() && !inconsistent(); i++) {
             new_th_eq curr = m_th_eq_propagation_queue[i];
             theory * th = get_theory(curr.m_th_id);
@@ -1670,6 +1673,9 @@ namespace smt {
     }
 
     void context::propagate_th_diseqs() {
+#ifdef _VIPER_PROFILING
+        scoped_nanowatch nw(m_profiling.theories_stopwatch);
+#endif
         for (unsigned i = 0; i < m_th_diseq_propagation_queue.size() && !inconsistent(); i++) {
             new_th_eq curr = m_th_diseq_propagation_queue[i];
             theory * th = get_theory(curr.m_th_id);
@@ -1704,6 +1710,9 @@ namespace smt {
        congruences cannot be retracted to a consistent state.
      */
     bool context::propagate() {
+#ifdef _VIPER_PROFILING
+        scoped_nanowatch nw(m_profiling.total_propagation_stopwatch);
+#endif
         TRACE("propagate", tout << "propagating... " << m_qhead << ":" << m_assigned_literals.size() << "\n";);
         while (true) {
             if (inconsistent())

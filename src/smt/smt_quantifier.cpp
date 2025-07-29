@@ -363,16 +363,18 @@ namespace smt {
 
         void propagate() {
 #ifdef _VIPER_PROFILING
-            m_context.m_profiling.quant_propagation_stopwatch.start();
+            {
+            scoped_nanowatch sw(m_context.m_profiling.quant_propagation_stopwatch);
 #endif
             m_plugin->propagate();
 #ifdef _VIPER_PROFILING
-            m_context.m_profiling.quant_propagation_stopwatch.stop();
-            m_context.m_profiling.instantiation_stopwatch.start();
+            }
+            {
+            scoped_nanowatch sw(m_context.m_profiling.qi_queue_instantiation_stopwatch);
 #endif
             m_qi_queue.instantiate();
 #ifdef _VIPER_PROFILING
-            m_context.m_profiling.instantiation_stopwatch.stop();
+            }
 #endif
         }
 
