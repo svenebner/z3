@@ -72,13 +72,13 @@ void profiling::scope_update() {
     const double currSeconds = node_total_stopwatch.get_seconds();
     const double currMamSeconds = entered_mam_loop ? mam_total_stopwatch.get_last_update_seconds() : 0.0;
 
-    const double currQuantPropSec = quant_propagation_stopwatch.get_last_update_seconds();
+    const double currEMatchingSec = ematching_stopwatch.get_last_update_seconds();
     const double currQiQueueSec = qi_queue_instantiation_stopwatch.get_last_update_seconds();
     const double currTheorySec = theories_stopwatch.get_last_update_seconds();
 
     //Save runtime per node
     add_node_runtime({
-        currSeconds, currMamSeconds, currQuantPropSec, currQiQueueSec, currTheorySec, currentNode, entered_mam_loop
+        currSeconds, currMamSeconds, currEMatchingSec, currQiQueueSec, currTheorySec, currentNode, entered_mam_loop
     });
     if (currSeconds > high_time_threshold) {
         high_time_count_total++;
@@ -94,7 +94,7 @@ void profiling::scope_update() {
     node_total_stopwatch.reset();
 
     mam_total_stopwatch.reset_last_update();
-    quant_propagation_stopwatch.reset_last_update();
+    ematching_stopwatch.reset_last_update();
     qi_queue_instantiation_stopwatch.reset_last_update();
     theories_stopwatch.reset_last_update();
 
@@ -144,7 +144,7 @@ void profiling::write_data_to_files() const {
     (*fs_general) << "timings:\n"
         << "total conflict resolution: " << total_conflict_stopwatch.get_seconds() << "\n"
         << "total propagation: " << total_propagation_stopwatch.get_seconds() << "\n"
-        << "    quantifier propagation: " << quant_propagation_stopwatch.get_seconds() << "\n"
+        << "    e-matching time: " << ematching_stopwatch.get_seconds() << "\n"
         << "        total mam time: " << mam_total_stopwatch.get_seconds() << "\n"
         << "        cumulative mam high time: " << sum_mam_high_time_nodes() << "\n"
         << "    quantifier queue instantiation: " << qi_queue_instantiation_stopwatch.get_seconds() << "\n"
@@ -165,7 +165,7 @@ void profiling::collect_statistics(statistics& st) const {
     st.update("PROFILE max node", currentNode);
     st.update("PROFILE time cumulative mam high time", sum_mam_high_time_nodes());
     st.update("PROFILE time total propagation", total_propagation_stopwatch.get_seconds());
-    st.update("PROFILE time quantifier propagation", quant_propagation_stopwatch.get_seconds());
+    st.update("PROFILE time e-matching", ematching_stopwatch.get_seconds());
     st.update("PROFILE time total mam", mam_total_stopwatch.get_seconds());
     st.update("PROFILE time quantifier queue instantiation", qi_queue_instantiation_stopwatch.get_seconds());
     st.update("PROFILE time theories propagation", theories_stopwatch.get_seconds());
@@ -208,10 +208,10 @@ void profiling::high_time_backtracking_distance(const std::string& filename) con
 void profiling::output_timing_csv(const std::string& filename) const {
     std::ofstream os(concat_filepath(filename));
 
-    os << "node,total_time,entered_mam_loop,mam_time,quantifier_propagation_time,qi_queue_time,theory_time\n";
-    for (const auto& [total_time, mam_time, quant_prop_time,qi_queue_time, theory_time, node, entered_mam_loop] :
+    os << "node,total_time,entered_mam_loop,mam_time,e_matching_time,qi_queue_time,theory_time\n";
+    for (const auto& [total_time, mam_time, ematching_time,qi_queue_time, theory_time, node, entered_mam_loop] :
          node_runtime_vec) {
-        os << node << "," << total_time << "," << entered_mam_loop << "," << mam_time << "," << quant_prop_time << ","
+        os << node << "," << total_time << "," << entered_mam_loop << "," << mam_time << "," << ematching_time << ","
             << qi_queue_time << "," << theory_time << "\n";
     }
 }

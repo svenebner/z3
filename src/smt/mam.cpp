@@ -2315,10 +2315,6 @@ namespace {
             goto backtrack;
         TRACE("mam_int", display_pc_info(tout););
 
-#ifdef _VIPER_PROFILING
-        // Updating in each step takes a considerable amount of time, might not be needed
-        m_context.m_profiling.mam_loop_update(m_pc->m_opcode);
-#endif
 #ifdef _PROFILE_MAM
         const_cast<instruction*>(m_pc)->m_counter++;
 #endif

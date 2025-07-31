@@ -26,7 +26,7 @@ Revision History:
 struct node_runtime {
     double time;
     double mam_time;
-    double quant_propagation_time;
+    double ematching_time;
     double qi_queue_time;
     double theory_time;
     unsigned node;
@@ -177,7 +177,7 @@ public:
 
     // Stopwatches to track time spent in initialisation, core propagation and theories
     nanostopwatch total_propagation_stopwatch;
-    nanostopwatch quant_propagation_stopwatch;
+    nanostopwatch ematching_stopwatch;
     nanostopwatch qi_queue_instantiation_stopwatch;
     nanostopwatch theories_stopwatch;
     nanostopwatch mam_total_stopwatch;
@@ -188,8 +188,4 @@ public:
      */
     void setup_mam() { entered_mam_loop = true; }
 
-    void mam_loop_update(const int enumCase) {
-        mam_total_loop_itrs++;
-        mam_case_counters[enumCase]++;
-    }
 };

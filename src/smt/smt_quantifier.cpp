@@ -364,7 +364,7 @@ namespace smt {
         void propagate() {
 #ifdef _VIPER_PROFILING
             {
-            scoped_nanowatch sw(m_context.m_profiling.quant_propagation_stopwatch);
+            scoped_nanowatch sw(m_context.m_profiling.ematching_stopwatch);
 #endif
             m_plugin->propagate();
 #ifdef _VIPER_PROFILING
