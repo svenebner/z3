@@ -142,12 +142,13 @@ void profiling::mam_loop_output(std::ofstream* out) const {
  */
 void profiling::write_data_to_files() const {
     (*fs_general) << "timings:\n"
+        << "total conflict resolution: " << total_conflict_stopwatch.get_seconds() << "\n"
         << "total propagation: " << total_propagation_stopwatch.get_seconds() << "\n"
-        << "quantifier propagation: " << quant_propagation_stopwatch.get_seconds() << "\n"
-        << "    total mam time: " << mam_total_stopwatch.get_seconds() << "\n"
-        << "    cumulative mam high time: " << sum_mam_high_time_nodes() << "\n"
-        << "quantifier queue instantiation: " << qi_queue_instantiation_stopwatch.get_seconds() << "\n"
-        << "theories propagation: " << theories_stopwatch.get_seconds() << "\n\n";
+        << "    quantifier propagation: " << quant_propagation_stopwatch.get_seconds() << "\n"
+        << "        total mam time: " << mam_total_stopwatch.get_seconds() << "\n"
+        << "        cumulative mam high time: " << sum_mam_high_time_nodes() << "\n"
+        << "    quantifier queue instantiation: " << qi_queue_instantiation_stopwatch.get_seconds() << "\n"
+        << "    theories propagation: " << theories_stopwatch.get_seconds() << "\n\n";
     mam_loop_output(fs_general);
     high_time_backtracking_distance("backtracking.csv");
     output_timing_csv("timing.csv");
@@ -168,6 +169,7 @@ void profiling::collect_statistics(statistics& st) const {
     st.update("PROFILE time total mam", mam_total_stopwatch.get_seconds());
     st.update("PROFILE time quantifier queue instantiation", qi_queue_instantiation_stopwatch.get_seconds());
     st.update("PROFILE time theories propagation", theories_stopwatch.get_seconds());
+    st.update("PROFILE time conflicts", total_conflict_stopwatch.get_seconds());
 }
 
 /**

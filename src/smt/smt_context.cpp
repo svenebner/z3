@@ -4175,6 +4175,9 @@ namespace smt {
 
 
     bool context::resolve_conflict() {
+#ifdef _VIPER_PROFILING
+        scoped_nanowatch nw(m_profiling.total_conflict_stopwatch);
+#endif
         m_stats.m_num_conflicts++;
         m_num_conflicts ++;
         m_num_conflicts_since_restart ++;

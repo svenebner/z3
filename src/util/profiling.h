@@ -181,11 +181,15 @@ public:
     nanostopwatch qi_queue_instantiation_stopwatch;
     nanostopwatch theories_stopwatch;
     nanostopwatch mam_total_stopwatch;
+    nanostopwatch total_conflict_stopwatch;
 
     /*
      * Methods used to profile src/smt/mam.cpp
      */
     void setup_mam() { entered_mam_loop = true; }
-    void mam_loop_update() { mam_total_loop_itrs++; };
-    void set_mam_loop_counters(const int enumCase) { mam_case_counters[enumCase]++; }
+
+    void mam_loop_update(const int enumCase) {
+        mam_total_loop_itrs++;
+        mam_case_counters[enumCase]++;
+    }
 };
