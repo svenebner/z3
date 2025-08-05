@@ -121,21 +121,14 @@ public:
 protected:
     // All backtracking node numbers
     unsigned_vector backtracking_nodes;
-    // All high time node numbers
+    // All node time measurements
     vector<node_runtime> node_runtime_vec;
-    //Threshold what counts as high runtime
-    const double high_time_threshold = 0.005;
     // Node in smtScope CDCL tree
     unsigned currentNode{0};
-    // Nr. of loops iterations in mam.cpp state machine
-    long unsigned mam_total_loop_itrs{0};
-    bool entered_mam_loop{false};
-    // Timing of last node
-    nanostopwatch node_total_stopwatch;
 
-    unsigned mam_high_time_count{0};
-    // Nr. of states that took longer so dominate runtime
-    unsigned high_time_count_total{0};
+    bool entered_mam_loop{false};
+    // Timing of entire run, stopped per node
+    nanostopwatch node_total_stopwatch;
 
     svector<std::pair<long, unsigned>> backtrack_distances;
 
@@ -157,9 +150,7 @@ protected:
     /*
      * Helper Functions
      */
-    void mam_loop_output(std::ofstream* out) const;
-    double sum_mam_high_time_nodes() const;
-    void high_time_backtracking_distance(const std::string& filename) const;
+    void output_backtracking_nodes(const std::string& filename) const;
     void output_timing_csv(const std::string& filename) const;
 
     void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }

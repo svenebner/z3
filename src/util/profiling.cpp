@@ -69,7 +69,7 @@ profiling::~profiling() {
 void profiling::scope_update() {
     node_total_stopwatch.stop();
 
-    const double currSeconds = node_total_stopwatch.get_seconds();
+    const double currSeconds = node_total_stopwatch.get_last_update_seconds();
     const double currMamSeconds = entered_mam_loop ? mam_total_stopwatch.get_last_update_seconds() : 0.0;
 
     const double currEMatchingSec = ematching_stopwatch.get_last_update_seconds();
@@ -80,19 +80,11 @@ void profiling::scope_update() {
     add_node_runtime({
         currSeconds, currMamSeconds, currEMatchingSec, currQiQueueSec, currTheorySec, currentNode, entered_mam_loop
     });
-    if (currSeconds > high_time_threshold) {
-        high_time_count_total++;
-        if (entered_mam_loop && currMamSeconds > high_time_threshold) {
-            mam_high_time_count++;
-        }
-    }
 
     currentNode++;
-    //mam_total_loop_itrs = 0;
     entered_mam_loop = false;
 
-    node_total_stopwatch.reset();
-
+    node_total_stopwatch.reset_last_update();
     mam_total_stopwatch.reset_last_update();
     ematching_stopwatch.reset_last_update();
     qi_queue_instantiation_stopwatch.reset_last_update();
@@ -113,44 +105,18 @@ void profiling::backtracking_update(const unsigned num_scopes, const unsigned ne
 }
 
 /**
- * @brief Outputs MAM loop profiling statistics.
- *
- * Prints the total MAM loop iterations and, for each opcode with >1% share,
- * its name, count, and percentage.
- *
- * @param out Optional output stream; defaults to std::cerr.
- */
-void profiling::mam_loop_output(std::ofstream* out) const {
-    std::ostream& os = out ? *out : std::cerr;
-
-    os << "mam loop iterations: " << mam_total_loop_itrs << "\n";
-    for (unsigned i = 0; i < mam_case_counters.size(); i++) {
-        if (mam_total_loop_itrs > 0) {
-            const double percent = (static_cast<double>(mam_case_counters[i]) / static_cast<double>(
-                mam_total_loop_itrs)) * 100.0;
-            if (percent > 1) {
-                os << opcode_names[i] << ": " << mam_case_counters[i];
-                os << " (" << percent << "%)" << "\n";
-            }
-        }
-    }
-    os << "\n";
-};
-
-/**
  * @brief Writes all collected data to files.
  */
 void profiling::write_data_to_files() const {
-    (*fs_general) << "timings:\n"
+    (*fs_general) << "timings (seconds):\n"
+        << "total runtime: " << node_total_stopwatch.get_seconds() << "\n"
         << "total conflict resolution: " << total_conflict_stopwatch.get_seconds() << "\n"
         << "total propagation: " << total_propagation_stopwatch.get_seconds() << "\n"
         << "    e-matching time: " << ematching_stopwatch.get_seconds() << "\n"
         << "        total mam time: " << mam_total_stopwatch.get_seconds() << "\n"
-        << "        cumulative mam high time: " << sum_mam_high_time_nodes() << "\n"
         << "    quantifier queue instantiation: " << qi_queue_instantiation_stopwatch.get_seconds() << "\n"
         << "    theories propagation: " << theories_stopwatch.get_seconds() << "\n\n";
-    mam_loop_output(fs_general);
-    high_time_backtracking_distance("backtracking.csv");
+    output_backtracking_nodes("backtracking.csv");
     output_timing_csv("timing.csv");
 }
 
@@ -160,10 +126,7 @@ void profiling::write_data_to_files() const {
  * @param st Reference to the statistics object to update.
  */
 void profiling::collect_statistics(statistics& st) const {
-    st.update("PROFILE mam high time count", mam_high_time_count);
-    st.update("PROFILE high time count total", high_time_count_total);
     st.update("PROFILE max node", currentNode);
-    st.update("PROFILE time cumulative mam high time", sum_mam_high_time_nodes());
     st.update("PROFILE time total propagation", total_propagation_stopwatch.get_seconds());
     st.update("PROFILE time e-matching", ematching_stopwatch.get_seconds());
     st.update("PROFILE time total mam", mam_total_stopwatch.get_seconds());
@@ -173,22 +136,9 @@ void profiling::collect_statistics(statistics& st) const {
 }
 
 /**
- * @brief Sum of all mam_times that are over high_time_threshold
+ * @brief Writes all backtracking nodes to file
  */
-double profiling::sum_mam_high_time_nodes() const {
-    double sum = 0.0;
-    for (const node_runtime& nRt : node_runtime_vec) {
-        if (const double mam_time = nRt.mam_time; mam_time > high_time_threshold) {
-            sum += mam_time;
-        }
-    }
-    return sum;
-}
-
-/**
- * @brief Writes all backtracking nodes to file and adds info to the general file.
- */
-void profiling::high_time_backtracking_distance(const std::string& filename) const {
+void profiling::output_backtracking_nodes(const std::string& filename) const {
     std::ofstream os_back(concat_filepath(filename));
 
     os_back << "backtracking_node\n";
@@ -199,10 +149,6 @@ void profiling::high_time_backtracking_distance(const std::string& filename) con
         os_back << node << "\n";
     }
 
-    // Output general info into separate file
-    (*fs_general) << "backtracking_nodes: " << backtracking_nodes.size() << ", mam_high_time_nodes: " <<
-        mam_high_time_count
-        << ", high_time_nodes_total: " << high_time_count_total << ", threshold: " << high_time_threshold << "\n";
 }
 
 void profiling::output_timing_csv(const std::string& filename) const {
