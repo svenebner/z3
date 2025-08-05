@@ -20,16 +20,6 @@ Revision History:
 #include "util/profiling.h"
 #include<iostream>
 
-static const char* opcode_names[] = {
-    "INIT1", "INIT2", "INIT3", "INIT4", "INIT5", "INIT6", "INITN",
-    "BIND1", "BIND2", "BIND3", "BIND4", "BIND5", "BIND6", "BINDN",
-    "YIELD1", "YIELD2", "YIELD3", "YIELD4", "YIELD5", "YIELD6", "YIELDN",
-    "COMPARE", "CHECK", "FILTER", "CFILTER", "PFILTER", "CHOOSE", "NOOP", "CONTINUE",
-    "GET_ENODE",
-    "GET_CGR1", "GET_CGR2", "GET_CGR3", "GET_CGR4", "GET_CGR5", "GET_CGR6", "GET_CGRN",
-    "IS_CGR"
-};
-
 /**
  * @brief Initializes profiling output directory and opens the general output file.
  */
@@ -45,7 +35,6 @@ profiling::profiling() {
     if (!fs::exists(file_output_dir)) {
         fs::create_directories(file_output_dir);
     }
-    fs_general = new std::ofstream(file_output_dir + "/profiling_output.txt");
 }
 
 /**
@@ -54,13 +43,7 @@ profiling::profiling() {
 profiling::~profiling() {
     // Get data of last scope, as it was never popped
     scope_update();
-
     write_data_to_files();
-    if (fs_general) {
-        fs_general->close();
-        delete fs_general;
-        fs_general = nullptr;
-    }
 }
 
 /**
@@ -108,14 +91,7 @@ void profiling::backtracking_update(const unsigned num_scopes, const unsigned ne
  * @brief Writes all collected data to files.
  */
 void profiling::write_data_to_files() const {
-    (*fs_general) << "timings (seconds):\n"
-        << "total runtime: " << node_total_stopwatch.get_seconds() << "\n"
-        << "total conflict resolution: " << total_conflict_stopwatch.get_seconds() << "\n"
-        << "total propagation: " << total_propagation_stopwatch.get_seconds() << "\n"
-        << "    e-matching time: " << ematching_stopwatch.get_seconds() << "\n"
-        << "        total mam time: " << mam_total_stopwatch.get_seconds() << "\n"
-        << "    quantifier queue instantiation: " << qi_queue_instantiation_stopwatch.get_seconds() << "\n"
-        << "    theories propagation: " << theories_stopwatch.get_seconds() << "\n\n";
+    output_general_timings("general_timings.csv");
     output_backtracking_nodes("backtracking.csv");
     output_timing_csv("timing.csv");
 }
@@ -136,6 +112,22 @@ void profiling::collect_statistics(statistics& st) const {
 }
 
 /**
+ * @brief Writes all overall timers to file
+ */
+void profiling::output_general_timings(const std::string& filename) const {
+    std::ofstream os_back(concat_filepath(filename));
+
+    os_back <<
+        "total_runtime,total_conflict_resolution,total_propagation,"
+        "e-matching_time,total_mam_time,quantifier_queue_instantiation,theories_propagation"
+        << "\n";
+    os_back << node_total_stopwatch.get_seconds() << "," << total_conflict_stopwatch.get_seconds()
+        << "," << total_propagation_stopwatch.get_seconds() << "," << ematching_stopwatch.get_seconds()
+        << "," << mam_total_stopwatch.get_seconds() << "," << qi_queue_instantiation_stopwatch.get_seconds()
+        << "," << theories_stopwatch.get_seconds() << "\n";
+}
+
+/**
  * @brief Writes all backtracking nodes to file
  */
 void profiling::output_backtracking_nodes(const std::string& filename) const {
@@ -143,12 +135,9 @@ void profiling::output_backtracking_nodes(const std::string& filename) const {
 
     os_back << "backtracking_node\n";
 
-    if (backtracking_nodes.empty()) return;
-
     for (const unsigned node : backtracking_nodes) {
         os_back << node << "\n";
     }
-
 }
 
 void profiling::output_timing_csv(const std::string& filename) const {

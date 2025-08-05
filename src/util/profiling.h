@@ -138,8 +138,6 @@ protected:
      * File output
      */
     std::string file_output_dir;
-    // Default file for general info
-    std::ofstream* fs_general = nullptr;
     // Prepends the output directory
     [[nodiscard]] std::string concat_filepath(const std::string& filename) const {
         return file_output_dir + "/" + filename;
@@ -150,6 +148,7 @@ protected:
     /*
      * Helper Functions
      */
+    void output_general_timings(const std::string& filename) const;
     void output_backtracking_nodes(const std::string& filename) const;
     void output_timing_csv(const std::string& filename) const;
 
@@ -178,5 +177,4 @@ public:
      * Methods used to profile src/smt/mam.cpp
      */
     void setup_mam() { entered_mam_loop = true; }
-
 };
