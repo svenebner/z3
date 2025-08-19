@@ -2287,7 +2287,6 @@ namespace {
         t->inc_counter();
 #endif
 #ifdef _VIPER_PROFILING
-        m_context.m_profiling.setup_mam();
         scoped_nanowatch nw(m_context.m_profiling.mam_total_stopwatch);
 #endif
         // It doesn't make sense to process an irrelevant enode.

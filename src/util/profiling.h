@@ -29,8 +29,8 @@ struct node_runtime {
     double ematching_time;
     double qi_queue_time;
     double theory_time;
+    double propagation_time;
     unsigned node;
-    bool entered_mam_loop;
 };
 
 
@@ -126,13 +126,8 @@ protected:
     // Node in smtScope CDCL tree
     unsigned currentNode{0};
 
-    bool entered_mam_loop{false};
     // Timing of entire run, stopped per node
     nanostopwatch node_total_stopwatch;
-
-    svector<std::pair<long, unsigned>> backtrack_distances;
-
-    std::vector<long unsigned> mam_case_counters = std::vector<long unsigned>(38);
 
     /*
      * File output
@@ -173,8 +168,4 @@ public:
     nanostopwatch mam_total_stopwatch;
     nanostopwatch total_conflict_stopwatch;
 
-    /*
-     * Methods used to profile src/smt/mam.cpp
-     */
-    void setup_mam() { entered_mam_loop = true; }
 };

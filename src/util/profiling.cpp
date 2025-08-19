@@ -18,7 +18,11 @@ Revision History:
 --*/
 #include <filesystem>
 #include "util/profiling.h"
+#include <sstream>
 #include<iostream>
+
+// Static counter to mitigate overwriting files if the output directory has the same timestamp
+static int profiling_instance_counter = 0;
 
 /**
  * @brief Initializes profiling output directory and opens the general output file.
@@ -30,7 +34,8 @@ profiling::profiling() {
     std::ostringstream oss;
     const auto t = std::time(nullptr);
     oss << std::put_time(std::localtime(&t), "%Y-%m-%dT%H-%M-%S");
-    file_output_dir = "profiling_outputs/" + oss.str();
+    file_output_dir = "profiling_outputs/" + oss.str() + "_" + std::to_string(profiling_instance_counter);
+    profiling_instance_counter++;
 
     if (!fs::exists(file_output_dir)) {
         fs::create_directories(file_output_dir);
@@ -53,20 +58,21 @@ void profiling::scope_update() {
     node_total_stopwatch.stop();
 
     const double currSeconds = node_total_stopwatch.get_last_update_seconds();
-    const double currMamSeconds = entered_mam_loop ? mam_total_stopwatch.get_last_update_seconds() : 0.0;
+    const double currMamSeconds = mam_total_stopwatch.get_last_update_seconds();
 
+    const double currPropagationSec = total_propagation_stopwatch.get_last_update_seconds();
     const double currEMatchingSec = ematching_stopwatch.get_last_update_seconds();
     const double currQiQueueSec = qi_queue_instantiation_stopwatch.get_last_update_seconds();
     const double currTheorySec = theories_stopwatch.get_last_update_seconds();
 
     //Save runtime per node
     add_node_runtime({
-        currSeconds, currMamSeconds, currEMatchingSec, currQiQueueSec, currTheorySec, currentNode, entered_mam_loop
+        currSeconds, currMamSeconds, currEMatchingSec, currQiQueueSec, currTheorySec, currPropagationSec, currentNode,
     });
 
     currentNode++;
-    entered_mam_loop = false;
 
+    total_propagation_stopwatch.reset_last_update();
     node_total_stopwatch.reset_last_update();
     mam_total_stopwatch.reset_last_update();
     ematching_stopwatch.reset_last_update();
@@ -143,10 +149,10 @@ void profiling::output_backtracking_nodes(const std::string& filename) const {
 void profiling::output_timing_csv(const std::string& filename) const {
     std::ofstream os(concat_filepath(filename));
 
-    os << "node,total_time,entered_mam_loop,mam_time,e_matching_time,qi_queue_time,theory_time\n";
-    for (const auto& [total_time, mam_time, ematching_time,qi_queue_time, theory_time, node, entered_mam_loop] :
+    os << "node,total_time,propagation_time,mam_time,e_matching_time,qi_queue_time,theory_time\n";
+    for (const auto& [total_time, mam_time, ematching_time,qi_queue_time, theory_time,propagation_time, node] :
          node_runtime_vec) {
-        os << node << "," << total_time << "," << entered_mam_loop << "," << mam_time << "," << ematching_time << ","
+        os << node << "," << total_time << "," << propagation_time << "," << mam_time << "," << ematching_time << ","
             << qi_queue_time << "," << theory_time << "\n";
     }
 }
