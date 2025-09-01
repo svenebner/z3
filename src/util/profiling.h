@@ -125,7 +125,6 @@ protected:
     vector<node_runtime> node_runtime_vec;
     // Node in smtScope CDCL tree
     unsigned currentNode{0};
-
     // Timing of entire run, stopped per node
     nanostopwatch node_total_stopwatch;
 
@@ -149,6 +148,8 @@ protected:
 
     void add_backtracking_node(const unsigned node) { backtracking_nodes.push_back(node); }
     void add_node_runtime(const node_runtime& nRT) { node_runtime_vec.push_back(nRT); }
+
+    void add_totals_to_static_variables() const;
 
 public:
     explicit profiling();

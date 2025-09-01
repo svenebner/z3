@@ -24,6 +24,31 @@ Revision History:
 // Static counter to mitigate overwriting files if the output directory has the same timestamp
 static int profiling_instance_counter = 0;
 
+// Static timing values to ensure statistics get the overall value not just last run
+static double total_runtime = 0.0;
+static double total_mam_runtime = 0.0;
+static double total_ematching_runtime = 0.0;
+static double total_qi_queue_runtime = 0.0;
+static double total_theory_runtime = 0.0;
+static double total_propagation_runtime = 0.0;
+static double total_conflict_runtime = 0.0;
+static unsigned max_node = 0;
+
+
+/**
+ * @brief Adds the total time from all stopwatches to the static variables.
+ */
+void profiling::add_totals_to_static_variables() const {
+    total_runtime += node_total_stopwatch.get_seconds();
+    total_mam_runtime += mam_total_stopwatch.get_seconds();
+    total_ematching_runtime += ematching_stopwatch.get_seconds();
+    total_qi_queue_runtime += qi_queue_instantiation_stopwatch.get_seconds();
+    total_theory_runtime += theories_stopwatch.get_seconds();
+    total_propagation_runtime += total_propagation_stopwatch.get_seconds();
+    total_conflict_runtime += total_conflict_stopwatch.get_seconds();
+    max_node = std::max(max_node, currentNode);
+}
+
 /**
  * @brief Initializes profiling output directory and opens the general output file.
  */
@@ -48,6 +73,7 @@ profiling::profiling() {
 profiling::~profiling() {
     // Get data of last scope, as it was never popped
     scope_update();
+    add_totals_to_static_variables();
     write_data_to_files();
 }
 
@@ -103,18 +129,19 @@ void profiling::write_data_to_files() const {
 }
 
 /**
- * @brief Collects profiling statistics and updates the provided statistics object.
+ * @brief Collects profiling statistics for entire file and updates the provided statistics object.
  *
  * @param st Reference to the statistics object to update.
  */
 void profiling::collect_statistics(statistics& st) const {
-    st.update("PROFILE max node", currentNode);
-    st.update("PROFILE time total propagation", total_propagation_stopwatch.get_seconds());
-    st.update("PROFILE time e-matching", ematching_stopwatch.get_seconds());
-    st.update("PROFILE time total mam", mam_total_stopwatch.get_seconds());
-    st.update("PROFILE time quantifier queue instantiation", qi_queue_instantiation_stopwatch.get_seconds());
-    st.update("PROFILE time theories propagation", theories_stopwatch.get_seconds());
-    st.update("PROFILE time conflicts", total_conflict_stopwatch.get_seconds());
+    add_totals_to_static_variables();
+    st.update("PROFILE max node", max_node);
+    st.update("PROFILE time total propagation", total_propagation_runtime);
+    st.update("PROFILE time e-matching", total_ematching_runtime);
+    st.update("PROFILE time total mam", total_mam_runtime);
+    st.update("PROFILE time quantifier queue instantiation", total_qi_queue_runtime);
+    st.update("PROFILE time theories propagation", total_theory_runtime);
+    st.update("PROFILE time conflicts", total_conflict_runtime);
 }
 
 /**
